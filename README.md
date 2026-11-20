@@ -24,7 +24,7 @@ Decode numbers include DFly2 speculative decoding (5 draft tokens) and count rea
 |---|---|
 | GPUs | 2× NVIDIA RTX PRO 6000 Blackwell Workstation Edition (SM120, 97,887 MiB each), PCIe, no NVLink |
 | GPU power limit | **450 W each** (default and max is 600 W) |
-| CPU / RAM | AMD Ryzen Threadripper PRO 9965WX (24C/48T), 215 GiB RAM |
+| CPU / RAM | AMD Ryzen Threadripper PRO 9965WX (24C/48T), 256 GB RAM (`free` reports 215 GiB usable) |
 | Driver / CUDA | 595.99.02 / CUDA 13.2 driver, CUDA 13.0 in the image |
 | Image | `vllm/vllm-openai:hy4-flash` = `sha256:6b645bfbf4b89602d38f6e93c1c418516ec0bfbf54b64cd661b8075bfec01da1` |
 | vLLM / FlashInfer / PyTorch | 0.1.dev25463+g77766db1f / 0.7.4 / 2.14.0+cu130 |
@@ -160,6 +160,16 @@ Mean of two warm runs, which agreed within 2%. **The first long prompts after a 
 
 ### Decode at concurrency 1 / 2 / 4 / 8 (short prompts, 1,024 output tokens)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/charts/decode-aggregate-dark.svg">
+  <img alt="Aggregate decode throughput vs concurrency: prose 62, 102, 149, 211 tok/s; coding 87, 142, 190, 274; counting 106, 171, 239, 347 at C1, C2, C4, C8" src="docs/charts/decode-aggregate-light.svg">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/charts/decode-per-user-dark.svg">
+  <img alt="Per-user decode speed vs concurrency: prose 62, 51, 38, 26 tok/s; coding 87, 72, 48, 35; counting 106, 89, 62, 45 at C1, C2, C4, C8" src="docs/charts/decode-per-user-light.svg">
+</picture>
+
 | Workload | C | Aggregate tok/s | Per-user tok/s | TTFT p50 (s) |
 |---|---|---|---|---|
 | Prose (short story) | 1 | 62.4 | 62.4 | 0.17 |
@@ -178,6 +188,11 @@ Mean of two warm runs, which agreed within 2%. **The first long prompts after a 
 Medians of 2 rounds per cell. The spread across workloads comes from DFly2 speculative decoding: predictable text (counting, code) gets more draft tokens accepted than free-form prose.
 
 ### Decode at long context (prose task after a unique N-token document, 512 output tokens)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/charts/decode-context-dark.svg">
+  <img alt="Aggregate decode throughput at long context: 16K context 62, 104, 145, 217 tok/s at C1 to C8; 64K 61, 106, 149 at C1 to C4; 128K 70, 91 at C1 and C2" src="docs/charts/decode-context-light.svg">
+</picture>
 
 | Context | C | Aggregate decode tok/s | Per-user tok/s | TTFT p50 (s) |
 |---|---|---|---|---|
@@ -213,6 +228,7 @@ python3 bench.py --only prefill  --out results-prefill.json
 python3 bench.py --only decode   --out results-decode.json
 python3 bench.py --only context  --pool-tokens 308058 --out results-context.json
 # or ./run_all.sh  (all three phases, plus a GPU power log)
+python3 make_charts.py   # regenerates docs/charts/*.svg from the JSON results
 ```
 
 ## Known limitations
